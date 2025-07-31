@@ -13,7 +13,7 @@ internal class Program {
         n.Size = new Vector2i(1920, 1080);
         n.Title = "Slopcraft";
 
-        n.Vsync = OpenTK.Windowing.Common.VSyncMode.On;
+        //n.Vsync = OpenTK.Windowing.Common.VSyncMode.On;
 
         using (Game game = new Game(g, n)) {
             game.Run();
