@@ -16,6 +16,10 @@ namespace VoxelTK2 {
         int WindowWidth;
         int WindowHeight;
 
+        World world;
+        Shader shader;
+        Camera camera;
+
         public Game(GameWindowSettings g, NativeWindowSettings n) : base(g, n) {
 
             WindowWidth = n.Size.X;
@@ -31,15 +35,26 @@ namespace VoxelTK2 {
 
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
-            GL.FrontFace(FrontFaceDirection.Ccw);
+            GL.FrontFace(FrontFaceDirection.Cw);
 
             CursorState = CursorState.Grabbed;
+
+            camera = new Camera(WindowWidth, WindowHeight, new Vector3(0, 0, 0));
+
+            shader = new Shader("shaders/vertex.vert", "shaders/pixel.frag");
+            shader.Use();
+
+            world = new World();
 
         }
 
         protected override void OnLoad() {
             base.OnLoad();
             DefineAllBlocks();
+            RawMouseInputReader.SetMoveCallback(MouseMove);
+            RawMouseInputReader.SetWheelCallback(MouseScroll);
+            RawMouseInputReader.Initialize(RawMouseInputReader.GetActiveWindow());
+            BlockTextures.CreateGLTexture();
         }
 
         protected override void OnResize(ResizeEventArgs e) {
@@ -63,46 +78,49 @@ namespace VoxelTK2 {
                 CursorState = CursorState.Grabbed;
             }
 
+            camera.Update(KeyboardState, MouseState, args);
+            world.Update(camera.position);
+            //Console.WriteLine($"blocks {world.blocks.Count}");
+            //Console.WriteLine($"meshes {world.meshes.Count}");
+
             //if (CursorState == CursorState.Grabbed)
-                //camera.Update(KeyboardState, MouseState, args);
+            //camera.Update(KeyboardState, MouseState, args);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args) {
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            /*
-
             shader.Use();
-            texture.Use(0);
+            BlockTextures.Use(TextureUnit.Texture0);
 
             Matrix4 model = Matrix4.Identity;
             Matrix4 view = camera.getViewMatrix();
             Matrix4 projection = camera.getProjectionMatrix();
 
-            model *= Matrix4.CreateTranslation(0f, 0f, -3f);
-
             int modelLocation = GL.GetUniformLocation(shader.Handle, "model");
             int viewLocation = GL.GetUniformLocation(shader.Handle, "view");
             int projectionLocation = GL.GetUniformLocation(shader.Handle, "projection");
 
-            GL.UniformMatrix4(modelLocation, true, ref model);
+            Mesh.ModelLocation = modelLocation;
+
             GL.UniformMatrix4(viewLocation, true, ref view);
             GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-            foreach (var x in Chunks) {
-                foreach (var y in x.Value) {
-                    foreach (var z in y.Value) {
-                        z.Value.Render();
-                    }
-                }
-            }
-
-            */
+            world.Render(camera.position);
 
             SwapBuffers();
 
             base.OnRenderFrame(args);
+
+        }
+
+        private void MouseMove(int deltaX, int deltaY) {
+            // Update yaw and pitch based on mouse movement
+            camera.MouseController(deltaX, deltaY);
+        }
+
+        private void MouseScroll(int delta) {
 
         }
 

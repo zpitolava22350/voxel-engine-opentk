@@ -32,7 +32,7 @@ namespace VoxelTK2 {
     static class BlockTextures {
 
         // Handle for GL texture
-        public static readonly int TextureHandle;
+        public static int TextureHandle;
 
 
         // A single texture is TextureSize x TextureSize
@@ -44,8 +44,10 @@ namespace VoxelTK2 {
         // 16 for both means the atlas is 256x256
 
         private static Image<Rgba32> Atlas;
-        private static Dictionary<string, Dictionary<Face, Vector2>> UVs; // UVs["Grass"][Face.Top] = a Vector2 that is the UV coords on the atlas for the top of a grass block
+        public static Dictionary<string, Dictionary<Face, Vector2>> UVs { get; private set; } // UVs["Grass"][Face.Top] = a Vector2 that is the UV coords on the atlas for the top of a grass block
         private static Dictionary<string, Vector2> TexturePositions; // used to ensure there are no duplicate textures on the atlas
+
+        public static List<string> BlockIDs { get; private set; } // BlockIDs[0] = air, BlocksIDs[1] = Grass or whatever the first defined block is
 
         // Keeps track of how many textures have been loaded, used to position them on the atlas
         private static int LoadedCount = 0;
@@ -54,6 +56,8 @@ namespace VoxelTK2 {
             Atlas = new Image<Rgba32>(TextureSize * AtlasSize, TextureSize * AtlasSize);
             UVs = new Dictionary<string, Dictionary<Face, Vector2>>();
             TexturePositions = new Dictionary<string, Vector2>();
+            BlockIDs = new List<string>();
+            BlockIDs.Add("Air");
         }
 
         /// <summary>
@@ -86,13 +90,16 @@ namespace VoxelTK2 {
             // Convert to byte[]
             byte[] bytes = MemoryMarshal.AsBytes(memory.Span).ToArray();
 
-            int TextureHandle = GL.GenTexture();
+            TextureHandle = GL.GenTexture();
 
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
+
+            GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
             GL.TexImage2D(TextureTarget.Texture2D,
                 level: 0, // LODs
-                internalformat: PixelInternalFormat.Rgba,
+                internalformat: PixelInternalFormat.Rgba8,
                 width: TextureSize * AtlasSize,
                 height: TextureSize * AtlasSize,
                 border: 0,
@@ -148,6 +155,8 @@ namespace VoxelTK2 {
                 UVs[blockName][f] = getTexturePosition(texture);
             }
 
+            BlockIDs.Add(blockName);
+
         }
 
         /// <summary>
@@ -174,6 +183,8 @@ namespace VoxelTK2 {
             block[Face.Right] = sideUVs;
 
             block[Face.Bottom] = bottomUVs;
+
+            BlockIDs.Add(blockName);
 
         }
 
@@ -207,6 +218,8 @@ namespace VoxelTK2 {
             block[Face.Right] = rightUVs;
 
             block[Face.Bottom] = bottomUVs;
+
+            BlockIDs.Add(blockName);
 
         }
 
