@@ -28,7 +28,7 @@ namespace VoxelTK2 {
             CenterWindow(new Vector2i(WindowWidth, WindowHeight));
             GL.Viewport(0, 0, WindowWidth, WindowHeight);
 
-            GL.ClearColor(0.1f, 0.7f, 0.4f, 1f);
+            GL.ClearColor(0.56f, 0.9f, 1f, 1f);
 
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
